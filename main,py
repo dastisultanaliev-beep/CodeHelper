@@ -1,0 +1,152 @@
+```python
+import webbrowser
+import sqlite3
+import customtkinter as ctk
+
+
+connection = sqlite3.connect('pc_helper.db')
+cursor = connection.cursor()
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS apps(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT UNIQUE,
+    launches INTEGER
+)
+""")
+
+connection.commit()
+
+
+def add_app_if_not_exists(app_name):
+    try:
+        cursor.execute(
+            """
+            INSERT INTO apps(name, launches)
+            VALUES (?, ?)
+            """,
+            (app_name, 0)
+        )
+        connection.commit()
+
+    except Exception as e:
+        print(f'Error! {e}')
+
+
+add_app_if_not_exists('ChatGPT')
+add_app_if_not_exists('YouTube')
+add_app_if_not_exists('Python Docs')
+
+
+def increase_launches(app_name):
+    cursor.execute(
+        """
+        UPDATE apps
+        SET launches = launches + 1
+        WHERE name = ?
+        """,
+        (app_name,)
+    )
+
+    connection.commit()
+
+
+def update_stats():
+    cursor.execute(
+        """
+        SELECT name, launches
+        FROM apps
+        """
+    )
+
+    apps = cursor.fetchall()
+
+    text = f'Launch Statistics\n\n'
+
+    for app in apps:
+        name = app[0]
+        launches = app[1]
+
+        text += f'{name}: {launches}\n'
+
+    stats_label.configure(text=text)
+
+
+def open_chatgpt():
+    webbrowser.open('https://chatgpt.com')
+
+    increase_launches('ChatGPT')
+    update_stats()
+
+
+def open_youtube():
+    webbrowser.open('https://youtube.com')
+
+    increase_launches('YouTube')
+    update_stats()
+
+
+def open_docs():
+    webbrowser.open('https://docs.python.org/3/')
+
+    increase_launches('Python Docs')
+    update_stats()
+
+
+ctk.set_appearance_mode('dark')
+
+app = ctk.CTk()
+
+app.title('Programmer Helper')
+app.geometry('500x600')
+
+
+title_label = ctk.CTkLabel(
+    app,
+    text='🤓 PROGRAMMER HELPER',
+    font=('Arial', 24, 'bold')
+)
+
+title_label.pack()
+
+
+chatgpt_button = ctk.CTkButton(
+    app,
+    text='🤖 ChatGPT',
+    command=open_chatgpt
+)
+
+chatgpt_button.pack(pady=10)
+
+
+youtube_button = ctk.CTkButton(
+    app,
+    text='🎥 YouTube',
+    command=open_youtube
+)
+
+youtube_button.pack(pady=10)
+
+
+docs_button = ctk.CTkButton(
+    app,
+    text='🧑‍💻 Python Docs',
+    command=open_docs
+)
+
+docs_button.pack(pady=10)
+
+
+stats_label = ctk.CTkLabel(
+    app,
+    text='',
+    justify='left'
+)
+
+stats_label.pack()
+
+
+update_stats()
+
+app.mainloop()
+```
